@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinancePro | joatbar</title>
+    <title>FinancePro Cloud | joatbar</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <style>
         :root {
@@ -13,7 +13,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
+        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
         /* LOGIN */
         #login-screen {
@@ -22,32 +22,30 @@
         }
         .login-card {
             background: var(--card-bg); padding: 40px; border-radius: 20px;
-            border: 1px solid var(--border); width: 100%; max-width: 380px; text-align: center;
+            border: 1px solid var(--border); width: 90%; max-width: 380px; text-align: center;
         }
         input {
             width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--border);
             background: #161e2d; color: white; outline: none; margin-bottom: 15px;
         }
-        .btn-login { width: 100%; padding: 14px; background: var(--primary); border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .btn-login { width: 100%; padding: 14px; background: var(--primary); border: none; border-radius: 10px; font-weight: 700; cursor: pointer; color: #000; }
 
-        /* DASHBOARD LAYOUT */
+        /* DASHBOARD */
         #main-content { display: none; padding: 20px; max-width: 1200px; margin: auto; }
         
-        /* TABS */
         .tabs-container {
             display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border); scrollbar-width: none;
         }
         .tab {
             padding: 10px 20px; background: var(--card-bg); border: 1px solid var(--border);
             border-radius: 12px; cursor: pointer; white-space: nowrap; color: var(--text-dim);
-            transition: all 0.2s;
         }
         .tab.active { background: var(--primary); color: #000; font-weight: 700; border-color: var(--primary); }
         .btn-add-tab { background: var(--success); color: #000; font-weight: 700; }
 
-        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
         .card { background: var(--card-bg); border-radius: 18px; padding: 26px; border: 1px solid var(--border); }
         .card-title { font-size: 0.8rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 20px; display: block; }
         
@@ -56,11 +54,13 @@
         .item-val:hover { color: var(--danger); text-decoration: line-through; }
 
         .btn-add { background: rgba(56, 189, 248, 0.1); border: 1px dashed var(--primary); color: var(--primary); width: 100%; padding: 12px; border-radius: 10px; margin-top: 20px; cursor: pointer; font-weight: 600; }
-        .btn-delete-month { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.75rem; text-decoration: underline; margin-top: 5px; }
+        .btn-delete-month { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.75rem; text-decoration: underline; }
 
         .val-plus { color: var(--success); font-weight: 600; }
         .val-minus { color: var(--danger); font-weight: 600; }
         .summary-value { font-size: 1.8rem; font-weight: 700; margin-top: 8px; }
+        
+        #loading-cloud { position: fixed; bottom: 20px; right: 20px; font-size: 0.7rem; color: var(--text-dim); }
     </style>
 </head>
 <body>
@@ -70,7 +70,7 @@
         <h2 style="margin-bottom: 20px;">Finance<span style="color: var(--primary)">Pro</span></h2>
         <input type="text" id="user" placeholder="Usuário" autocomplete="off">
         <input type="password" id="pass" placeholder="Senha">
-        <button class="btn-login" onclick="autenticar()">ENTRAR</button>
+        <button class="btn-login" onclick="window.autenticar()">ENTRAR</button>
         <p id="error-msg" style="color: var(--danger); font-size: 0.8rem; margin-top: 15px; display: none;">Acesso negado!</p>
     </div>
 </div>
@@ -78,27 +78,25 @@
 <div id="main-content">
     <header>
         <div>
-            <h1>Olá, <span style="color: var(--primary)">Joathan</span></h1>
-            <button onclick="logout()" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.8rem; text-decoration:underline;">Sair do Sistema</button>
+            <h1>Olá, <span style="color: var(--primary)">joatbar</span></h1>
+            <button onclick="window.logout()" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.8rem; text-decoration:underline;">Sair</button>
         </div>
-        <button class="btn-delete-month" onclick="excluirMesAtual()">Excluir Mês Atual</button>
+        <button class="btn-delete-month" onclick="window.excluirMesAtual()">Excluir Mês Atual</button>
     </header>
 
-    <div class="tabs-container" id="abas-meses">
-        <!-- Meses entram aqui -->
-    </div>
+    <div class="tabs-container" id="abas-meses"></div>
 
     <div class="dashboard-grid">
         <div class="card">
             <span class="card-title">Receitas</span>
             <div id="lista-entradas"></div>
-            <button class="btn-add" onclick="novoItem('entrada')">+ Receita</button>
+            <button class="btn-add" onclick="window.novoItem('entrada')">+ Receita</button>
         </div>
 
         <div class="card">
             <span class="card-title">Despesas</span>
             <div id="lista-saidas"></div>
-            <button class="btn-add" onclick="novoItem('saida')">+ Despesa</button>
+            <button class="btn-add" onclick="window.novoItem('saida')">+ Despesa</button>
         </div>
 
         <div class="card">
@@ -118,122 +116,139 @@
     </div>
 </div>
 
-<script>
-    const LOGIN_USER = "joatbar", LOGIN_PASS = "filadelfia";
-    
-    // Banco de dados organizado por meses
-    let db = JSON.parse(localStorage.getItem('financas_multi')) || {
-        meses: [
-            { id: "MAIO2024", nome: "MAIO / 2024", entradas: [], saidas: [] }
-        ],
-        atualId: "MAIO2024"
-    };
+<div id="loading-cloud">☁️ Sincronizado com a nuvem</div>
 
-    function autenticar() {
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getDatabase, ref, set, onValue } from "https://gstatic.com";
+
+    // ---------------------------------------------------------
+   // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDCGdGQWcVJUjC4dzkJSqHqRuL8lcd_r3c",
+  authDomain: "financepro-joatbar.firebaseapp.com",
+  databaseURL: "https://financepro-joatbar-default-rtdb.firebaseio.com",
+  projectId: "financepro-joatbar",
+  storageBucket: "financepro-joatbar.firebasestorage.app",
+  messagingSenderId: "646514088624",
+  appId: "1:646514088624:web:5528c4ebe19d4e5ed8f975"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+    // ---------------------------------------------------------
+
+    const app = initializeApp(firebaseConfig);
+    const dbCloud = getDatabase(app);
+    const LOGIN_USER = "joatbar", LOGIN_PASS = "filadelfia";
+
+    let db = { meses: [{ id: "MAIO2024", nome: "MAIO / 2024", entradas: [], saidas: [] }], atualId: "MAIO2024" };
+
+    // ESCUTAR NUVEM
+    onValue(ref(dbCloud, 'finance_db/'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) db = data;
+        if (sessionStorage.getItem('ativa') === 'true') renderizarTudo();
+    });
+
+    function salvar() {
+        set(ref(dbCloud, 'finance_db/'), db);
+    }
+
+    // FUNÇÕES GLOBAIS
+    window.autenticar = () => {
         if (document.getElementById('user').value === LOGIN_USER && document.getElementById('pass').value === LOGIN_PASS) {
             sessionStorage.setItem('ativa', 'true');
-            verificar();
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            renderizarTudo();
         } else {
             document.getElementById('error-msg').style.display = 'block';
         }
-    }
+    };
 
-    function verificar() {
-        if (sessionStorage.getItem('ativa') === 'true') {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            renderizarAbas();
-            renderizarDados();
-        }
-    }
+    window.logout = () => { sessionStorage.removeItem('ativa'); window.location.reload(); };
 
-    function logout() { sessionStorage.removeItem('ativa'); window.location.reload(); }
-
-    function renderizarAbas() {
-        const container = document.getElementById('abas-meses');
-        container.innerHTML = '';
-        
-        db.meses.forEach(mes => {
-            const btn = document.createElement('div');
-            btn.className = `tab ${db.atualId === mes.id ? 'active' : ''}`;
-            btn.innerText = mes.nome;
-            btn.onclick = () => { db.atualId = mes.id; salvar(); };
-            container.appendChild(btn);
-        });
-
-        const btnAdd = document.createElement('div');
-        btnAdd.className = 'tab btn-add-tab';
-        btnAdd.innerText = '+ Novo Mês';
-        btnAdd.onclick = criarMes;
-        container.appendChild(btnAdd);
-    }
-
-    function criarMes() {
-        const nome = prompt("Nome do Mês (Ex: JUNHO / 2024):");
-        if (nome) {
-            const id = nome.replace(/\s/g, '').toUpperCase();
-            if (db.meses.find(m => m.id === id)) return alert("Este mês já existe!");
-            
-            db.meses.push({ id, nome: nome.toUpperCase(), entradas: [], saidas: [] });
-            db.atualId = id;
-            salvar();
-        }
-    }
-
-    function excluirMesAtual() {
-        if (db.meses.length === 1) return alert("Você deve ter pelo menos um mês cadastrado!");
-        if (confirm(`Tem certeza que deseja excluir o mês ${db.atualId} e todos os seus dados?`)) {
-            db.meses = db.meses.filter(m => m.id !== db.atualId);
-            db.atualId = db.meses[0].id;
-            salvar();
-        }
-    }
-
-    function novoItem(tipo) {
+    window.novoItem = (tipo) => {
         const mes = db.meses.find(m => m.id === db.atualId);
         const desc = prompt("Descrição:");
         const valorRaw = prompt("Valor:");
         if (desc && valorRaw) {
             const val = parseFloat(valorRaw.replace(',', '.'));
             if (!isNaN(val)) {
-                if (tipo === 'entrada') mes.entradas.push({desc: desc.toUpperCase(), val});
-                else mes.saidas.push({desc: desc.toUpperCase(), val});
+                if (tipo === 'entrada') (mes.entradas = mes.entradas || []).push({desc: desc.toUpperCase(), val});
+                else (mes.saidas = mes.saidas || []).push({desc: desc.toUpperCase(), val});
                 salvar();
             }
         }
-    }
+    };
 
-    function removerItem(tipo, index, desc) {
+    window.removerItem = (tipo, index, desc) => {
         const mes = db.meses.find(m => m.id === db.atualId);
         if (confirm(`Excluir "${desc}"?`)) {
             if (tipo === 'entrada') mes.entradas.splice(index, 1);
             else mes.saidas.splice(index, 1);
             salvar();
         }
-    }
+    };
 
-    function salvar() {
-        localStorage.setItem('financas_multi', JSON.stringify(db));
-        renderizarAbas();
-        renderizarDados();
-    }
+    window.criarMes = () => {
+        const nome = prompt("Nome do Mês (Ex: JUNHO / 2024):");
+        if (nome) {
+            const id = nome.replace(/\s/g, '').toUpperCase() + Math.floor(Math.random() * 1000);
+            db.meses.push({ id, nome: nome.toUpperCase(), entradas: [], saidas: [] });
+            db.atualId = id;
+            salvar();
+        }
+    };
 
-    function renderizarDados() {
-        const mes = db.meses.find(m => m.id === db.atualId);
+    window.excluirMesAtual = () => {
+        if (db.meses.length === 1) return alert("Mantenha ao menos um mês.");
+        if (confirm("Excluir este mês e todos os dados?")) {
+            db.meses = db.meses.filter(m => m.id !== db.atualId);
+            db.atualId = db.meses[0].id;
+            salvar();
+        }
+    };
+
+    function renderizarTudo() {
+        // ABAS
+        const abas = document.getElementById('abas-meses');
+        abas.innerHTML = '';
+        db.meses.forEach(mes => {
+            const div = document.createElement('div');
+            div.className = `tab ${db.atualId === mes.id ? 'active' : ''}`;
+            div.innerText = mes.nome;
+            div.onclick = () => { db.atualId = mes.id; renderizarTudo(); };
+            abas.appendChild(div);
+        });
+        const btnAdd = document.createElement('div');
+        btnAdd.className = 'tab btn-add-tab';
+        btnAdd.innerText = '+ Novo';
+        btnAdd.onclick = window.criarMes;
+        abas.appendChild(btnAdd);
+
+        // DADOS
+        const mes = db.meses.find(m => m.id === db.atualId) || db.meses[0];
         const listE = document.getElementById('lista-entradas'), listS = document.getElementById('lista-saidas');
         let tE = 0, tS = 0;
         const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         listE.innerHTML = '';
-        mes.entradas.forEach((item, i) => {
+        (mes.entradas || []).forEach((item, i) => {
             tE += item.val;
-            listE.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-plus" onclick="removerItem('entrada', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
+            listE.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-plus" onclick="window.removerItem('entrada', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
         });
 
         listS.innerHTML = '';
-        mes.saidas.forEach((item, i) => {
+        (mes.saidas || []).forEach((item, i) => {
             tS += item.val;
-            listS.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-minus" onclick="removerItem('saida', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
+            listS.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-minus" onclick="window.removerItem('saida', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
         });
 
         document.getElementById('res-entradas').innerText = f(tE);
@@ -241,8 +256,10 @@
         document.getElementById('res-saldo').innerText = f(tE - tS);
     }
 
-    document.addEventListener('keypress', (e) => { if (e.key === 'Enter') autenticar(); });
-    verificar();
+    if (sessionStorage.getItem('ativa') === 'true') {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+    }
 </script>
 </body>
 </html>
