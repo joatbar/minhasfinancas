@@ -122,54 +122,56 @@
     import { initializeApp } from "https://gstatic.com";
     import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-    // ---------------------------------------------------------
-   // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDCGdGQWcVJUjC4dzkJSqHqRuL8lcd_r3c",
+    // 1. COLE SEUS DADOS DO FIREBASE AQUI (Não esqueça de preencher!)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDCGdGQWcVJUjC4dzkJSqHqRuL8lcd_r3c",
   authDomain: "financepro-joatbar.firebaseapp.com",
   databaseURL: "https://financepro-joatbar-default-rtdb.firebaseio.com",
   projectId: "financepro-joatbar",
   storageBucket: "financepro-joatbar.firebasestorage.app",
   messagingSenderId: "646514088624",
   appId: "1:646514088624:web:5528c4ebe19d4e5ed8f975"
-};
+    };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-    // ---------------------------------------------------------
-
+    // 2. INICIALIZAÇÃO
     const app = initializeApp(firebaseConfig);
     const dbCloud = getDatabase(app);
     const LOGIN_USER = "joatbar", LOGIN_PASS = "filadelfia";
 
     let db = { meses: [{ id: "MAIO2024", nome: "MAIO / 2024", entradas: [], saidas: [] }], atualId: "MAIO2024" };
 
-    // ESCUTAR NUVEM
-    onValue(ref(dbCloud, 'finance_db/'), (snapshot) => {
-        const data = snapshot.val();
-        if (data) db = data;
-        if (sessionStorage.getItem('ativa') === 'true') renderizarTudo();
-    });
+    // 3. FUNÇÃO DE LOGIN (CORRIGIDA)
+    window.autenticar = function() {
+        const u = document.getElementById('user').value;
+        const p = document.getElementById('pass').value;
 
-    function salvar() {
-        set(ref(dbCloud, 'finance_db/'), db);
-    }
-
-    // FUNÇÕES GLOBAIS
-    window.autenticar = () => {
-        if (document.getElementById('user').value === LOGIN_USER && document.getElementById('pass').value === LOGIN_PASS) {
+        if (u === LOGIN_USER && p === LOGIN_PASS) {
             sessionStorage.setItem('ativa', 'true');
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
+            
+            // Puxar dados da nuvem assim que logar
             renderizarTudo();
         } else {
             document.getElementById('error-msg').style.display = 'block';
         }
+    };
+
+    // ESCUTAR NUVEM CONSTANTEMENTE
+    onValue(ref(dbCloud, 'finance_db/'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            db = data;
+            // Só renderiza se o usuário já estiver logado
+            if (sessionStorage.getItem('ativa') === 'true') {
+                renderizarTudo();
+            }
+        }
+    });
+
+    // 4. RESTANTE DAS FUNÇÕES (EXPORTADAS PARA O WINDOW)
+    window.salvar = () => {
+        set(ref(dbCloud, 'finance_db/'), db);
     };
 
     window.logout = () => { sessionStorage.removeItem('ativa'); window.location.reload(); };
@@ -181,9 +183,14 @@ const app = initializeApp(firebaseConfig);
         if (desc && valorRaw) {
             const val = parseFloat(valorRaw.replace(',', '.'));
             if (!isNaN(val)) {
-                if (tipo === 'entrada') (mes.entradas = mes.entradas || []).push({desc: desc.toUpperCase(), val});
-                else (mes.saidas = mes.saidas || []).push({desc: desc.toUpperCase(), val});
-                salvar();
+                if (tipo === 'entrada') {
+                    if(!mes.entradas) mes.entradas = [];
+                    mes.entradas.push({desc: desc.toUpperCase(), val});
+                } else {
+                    if(!mes.saidas) mes.saidas = [];
+                    mes.saidas.push({desc: desc.toUpperCase(), val});
+                }
+                window.salvar();
             }
         }
     };
@@ -193,7 +200,7 @@ const app = initializeApp(firebaseConfig);
         if (confirm(`Excluir "${desc}"?`)) {
             if (tipo === 'entrada') mes.entradas.splice(index, 1);
             else mes.saidas.splice(index, 1);
-            salvar();
+            window.salvar();
         }
     };
 
@@ -203,7 +210,7 @@ const app = initializeApp(firebaseConfig);
             const id = nome.replace(/\s/g, '').toUpperCase() + Math.floor(Math.random() * 1000);
             db.meses.push({ id, nome: nome.toUpperCase(), entradas: [], saidas: [] });
             db.atualId = id;
-            salvar();
+            window.salvar();
         }
     };
 
@@ -212,13 +219,14 @@ const app = initializeApp(firebaseConfig);
         if (confirm("Excluir este mês e todos os dados?")) {
             db.meses = db.meses.filter(m => m.id !== db.atualId);
             db.atualId = db.meses[0].id;
-            salvar();
+            window.salvar();
         }
     };
 
     function renderizarTudo() {
-        // ABAS
         const abas = document.getElementById('abas-meses');
+        if(!abas) return;
+        
         abas.innerHTML = '';
         db.meses.forEach(mes => {
             const div = document.createElement('div');
@@ -227,39 +235,49 @@ const app = initializeApp(firebaseConfig);
             div.onclick = () => { db.atualId = mes.id; renderizarTudo(); };
             abas.appendChild(div);
         });
+
         const btnAdd = document.createElement('div');
         btnAdd.className = 'tab btn-add-tab';
         btnAdd.innerText = '+ Novo';
         btnAdd.onclick = window.criarMes;
         abas.appendChild(btnAdd);
 
-        // DADOS
-        const mes = db.meses.find(m => m.id === db.atualId) || db.meses[0];
+        const mes = db.meses.find(m => m.id === db.atualId);
         const listE = document.getElementById('lista-entradas'), listS = document.getElementById('lista-saidas');
         let tE = 0, tS = 0;
         const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         listE.innerHTML = '';
-        (mes.entradas || []).forEach((item, i) => {
-            tE += item.val;
-            listE.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-plus" onclick="window.removerItem('entrada', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
-        });
+        if(mes.entradas) {
+            mes.entradas.forEach((item, i) => {
+                tE += item.val;
+                listE.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-plus" onclick="window.removerItem('entrada', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
+            });
+        }
 
         listS.innerHTML = '';
-        (mes.saidas || []).forEach((item, i) => {
-            tS += item.val;
-            listS.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-minus" onclick="window.removerItem('saida', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
-        });
+        if(mes.saidas) {
+            mes.saidas.forEach((item, i) => {
+                tS += item.val;
+                listS.innerHTML += `<div class="item"><span>${item.desc}</span><span class="item-val val-minus" onclick="window.removerItem('saida', ${i}, '${item.desc}')">${f(item.val)}</span></div>`;
+            });
+        }
 
         document.getElementById('res-entradas').innerText = f(tE);
         document.getElementById('res-saidas').innerText = f(tS);
         document.getElementById('res-saldo').innerText = f(tE - tS);
     }
 
+    // AUTO-LOGIN (Se já estiver logado na sessão)
     if (sessionStorage.getItem('ativa') === 'true') {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
     }
+
+    // Atalho Enter
+    document.addEventListener('keypress', (e) => { if (e.key === 'Enter') window.autenticar(); });
+
 </script>
+
 </body>
 </html>
